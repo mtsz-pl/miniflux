@@ -256,6 +256,12 @@ func Parse() {
 		}
 	}
 
+	if filePath := config.Opts.ProxyOverrideFile(); filePath != "" {
+		if err := rewrite.LoadProxyOverrides(filePath); err != nil {
+			printErrorAndExit(fmt.Errorf("unable to load proxy overrides: %v", err))
+		}
+	}
+
 	if flagRefreshFeeds {
 		refreshFeeds(store)
 		return

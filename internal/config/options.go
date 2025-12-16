@@ -527,6 +527,11 @@ func NewConfigOptions() *configOptions {
 				RawValue:          "",
 				ValueType:         stringType,
 			},
+			"PROXY_OVERRIDE_FILE": {
+				ParsedStringValue: "",
+				RawValue:          "",
+				ValueType:         stringType,
+			},
 			"RUN_MIGRATIONS": {
 				ParsedBoolValue: false,
 				RawValue:        "0",
@@ -823,6 +828,10 @@ func (c *configOptions) LogFile() string {
 
 func (c *configOptions) RefererOverrideFile() string {
 	return c.options["REFERER_OVERRIDE_FILE"].ParsedStringValue
+}
+
+func (c *configOptions) ProxyOverrideFile() string {
+	return c.options["PROXY_OVERRIDE_FILE"].ParsedStringValue
 }
 
 func (c *configOptions) LogDateTime() bool {

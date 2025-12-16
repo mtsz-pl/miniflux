@@ -88,6 +88,11 @@ func (h *handler) mediaProxy(w http.ResponseWriter, r *http.Request) {
 	requestBuilder := fetcher.NewRequestBuilder()
 	requestBuilder.WithTimeout(config.Opts.MediaProxyHTTPClientTimeout())
 
+	// Use domain-based proxy override if configured for this URL
+	if proxyURL := rewrite.GetProxyForURL(mediaURL); proxyURL != "" {
+		requestBuilder.WithCustomFeedProxyURL(proxyURL)
+	}
+
 	// Disable compression for the media proxy requests (not implemented).
 	requestBuilder.WithoutCompression()
 

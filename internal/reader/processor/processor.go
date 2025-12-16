@@ -55,9 +55,17 @@ func ProcessFeedEntries(store *storage.Storage, feed *model.Feed, userID int64, 
 	requestBuilder.WithCookie(feed.Cookie)
 	requestBuilder.WithTimeout(config.Opts.HTTPClientTimeout())
 	requestBuilder.WithProxyRotator(proxyrotator.ProxyRotatorInstance)
-	requestBuilder.WithCustomFeedProxyURL(feed.ProxyURL)
-	requestBuilder.WithCustomApplicationProxyURL(config.Opts.HTTPClientProxyURL())
-	requestBuilder.UseCustomApplicationProxyURL(feed.FetchViaProxy)
+
+	// Priority: feed-specific proxy > domain-based proxy > application proxy
+	if feed.ProxyURL != "" {
+		requestBuilder.WithCustomFeedProxyURL(feed.ProxyURL)
+	} else if domainProxy := rewrite.GetProxyForURL(feed.FeedURL); domainProxy != "" {
+		requestBuilder.WithCustomFeedProxyURL(domainProxy)
+	} else if feed.FetchViaProxy {
+		requestBuilder.WithCustomApplicationProxyURL(config.Opts.HTTPClientProxyURL())
+		requestBuilder.UseCustomApplicationProxyURL(true)
+	}
+
 	requestBuilder.IgnoreTLSErrors(feed.AllowSelfSignedCertificates)
 	requestBuilder.DisableHTTP2(feed.DisableHTTP2)
 
@@ -183,9 +191,17 @@ func ProcessEntryWebPage(feed *model.Feed, entry *model.Entry, user *model.User)
 	requestBuilder.WithCookie(feed.Cookie)
 	requestBuilder.WithTimeout(config.Opts.HTTPClientTimeout())
 	requestBuilder.WithProxyRotator(proxyrotator.ProxyRotatorInstance)
-	requestBuilder.WithCustomFeedProxyURL(feed.ProxyURL)
-	requestBuilder.WithCustomApplicationProxyURL(config.Opts.HTTPClientProxyURL())
-	requestBuilder.UseCustomApplicationProxyURL(feed.FetchViaProxy)
+
+	// Priority: feed-specific proxy > domain-based proxy > application proxy
+	if feed.ProxyURL != "" {
+		requestBuilder.WithCustomFeedProxyURL(feed.ProxyURL)
+	} else if domainProxy := rewrite.GetProxyForURL(feed.FeedURL); domainProxy != "" {
+		requestBuilder.WithCustomFeedProxyURL(domainProxy)
+	} else if feed.FetchViaProxy {
+		requestBuilder.WithCustomApplicationProxyURL(config.Opts.HTTPClientProxyURL())
+		requestBuilder.UseCustomApplicationProxyURL(true)
+	}
+
 	requestBuilder.IgnoreTLSErrors(feed.AllowSelfSignedCertificates)
 	requestBuilder.DisableHTTP2(feed.DisableHTTP2)
 
