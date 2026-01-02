@@ -61,8 +61,6 @@ func ProcessFeedEntries(store *storage.Storage, feed *model.Feed, userID int64, 
 	requestBuilder.IgnoreTLSErrors(feed.AllowSelfSignedCertificates)
 	requestBuilder.DisableHTTP2(feed.DisableHTTP2)
 
-	filterAfterProcessing := config.Opts.ApplyFilterRulesAfterProcessing()
-
 	// Processing older entries first ensures that their creation timestamp is lower than newer entries.
 	for _, entry := range slices.Backward(feed.Entries) {
 		slog.Debug("Processing entry",
@@ -73,18 +71,6 @@ func ProcessFeedEntries(store *storage.Storage, feed *model.Feed, userID int64, 
 			slog.Int64("feed_id", feed.ID),
 			slog.String("feed_url", feed.FeedURL),
 		)
-
-		if !filterAfterProcessing && filter.IsBlockedEntry(blockRules, allowRules, feed, entry) {
-			slog.Debug("Entry is blocked by filter rules",
-				slog.Int64("user_id", user.ID),
-				slog.String("entry_url", entry.URL),
-				slog.String("entry_hash", entry.Hash),
-				slog.String("entry_title", entry.Title),
-				slog.Int64("feed_id", feed.ID),
-				slog.String("feed_url", feed.FeedURL),
-			)
-			continue
-		}
 
 		parsedInputUrl, _ := url.Parse(entry.URL)
 		if cleanedURL, err := urlcleaner.RemoveTrackingParameters(parsedFeedURL, parsedSiteURL, parsedInputUrl); err == nil {
@@ -149,7 +135,7 @@ func ProcessFeedEntries(store *storage.Storage, feed *model.Feed, userID int64, 
 		// The sanitizer should always run at the end of the process to make sure unsafe HTML is filtered out.
 		entry.Content = sanitizer.SanitizeHTML(webpageBaseURL, entry.Content, &sanitizer.SanitizerOptions{OpenLinksInNewTab: user.OpenExternalLinksInNewTab})
 
-		if filterAfterProcessing && filter.IsBlockedEntry(blockRules, allowRules, feed, entry) {
+		if filter.IsBlockedEntry(blockRules, allowRules, feed, entry) {
 			slog.Debug("Entry is blocked by filter rules",
 				slog.Int64("user_id", user.ID),
 				slog.String("entry_url", entry.URL),
